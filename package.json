@@ -1,0 +1,35 @@
+{
+  "name": "ndut",
+  "version": "0.0.1",
+  "description": "Ndut",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ardhi/ndut.git"
+  },
+  "keywords": [
+    "fastify",
+    "bootstraper"
+  ],
+  "author": "Ardhi Lukianto <ardhi@lukianto.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ardhi/ndut/issues"
+  },
+  "homepage": "https://github.com/ardhi/ndut#readme",
+  "dependencies": {
+    "@mgcrea/fastify-request-logger": "^0.5.2",
+    "@mgcrea/pino-pretty-compact": "^0.5.0",
+    "aneka": "0.0.7",
+    "fastify": "^3.24.0",
+    "fastify-static": "^4.5.0",
+    "fs-extra": "^10.0.0",
+    "lodash": "^4.17.21",
+    "mime": "^3.0.0",
+    "mri": "^1.2.0",
+    "qs": "^6.10.1"
+  }
+}
