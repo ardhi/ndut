@@ -7,7 +7,7 @@ module.exports = config => {
     logger,
     disableRequestLogging: config.argv.debug
   })
-  fastify.decorate('config', config)
   if (config.argv.debug) fastify.register(require('@mgcrea/fastify-request-logger').default)
+  fastify.decorate('config', config)
   return fastify
 }

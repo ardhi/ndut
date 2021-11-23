@@ -22,6 +22,7 @@ const initConfig = async () => {
   cfg.dataDir = dataDir
   cfg.port = cfg.port || 7777
   cfg.server = cfg.server || 'localhost'
+  cfg.plugins = {}
   return cfg
 }
 
