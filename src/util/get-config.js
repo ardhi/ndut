@@ -1,29 +1,56 @@
 const mri = require('mri')
-const argv = mri(process.argv.slice(2))
+const argv = mri(process.argv.slice(2), {
+  boolean: ['debug', 'print-routes'],
+  string: ['data-dir'],
+  alias: {
+    r: 'print-routes',
+    d: 'data-dir'
+  }
+})
 const fatal = require('aneka/src/misc/fatal')
+const pathResolve = require('aneka/src/fs/path-resolve')
 const path = require('path')
 const fs = require('fs-extra')
+const { isEmpty, merge, forOwn, isBoolean, omit } = require('lodash')
 
 const initConfig = async () => {
-  const dataDir = path.resolve(argv._[0] || process.cwd()).replace(/\\/g, '/')
-  if (!fs.existsSync(dataDir)) fatal('Data directory doesn\'t exists!')
-  for (const item of ['pub', 'tmp']) {
-    await fs.ensureDir(path.join(dataDir, item))
+  let cfg = {
+    dir: {
+      data: argv['data-dir'],
+      route: './routes',
+      public: './public',
+      tmp: './tmp'
+    },
+    prefix: {
+      route: '/',
+      public: '/assets'
+    },
+    server: {
+      ip: '127.0.0.1',
+      port: 7777
+    },
+    factory: {}
   }
-  const cfgFile = path.join(dataDir, 'config.json')
+  if (isEmpty(cfg.dir.data)) fatal('No data directory provided')
+  cfg.dir.data = pathResolve(cfg.dir.data)
+  if (!fs.existsSync(cfg.dir.data)) fatal(`Directory "${cfg.dir.data}" doesn\'t exists!`)
+  const cfgFile = pathResolve(path.join(cfg.dir.data, 'config.json'))
   if (!fs.existsSync(cfgFile)) fatal(`Configuration file "${cfgFile}" not found!`)
-  let cfg = {}
   try {
-    cfg = require(cfgFile)
+    cfg = merge(cfg, omit(require(cfgFile), ['dir']))
   } catch (err) {
     fatal(err.message)
   }
-  cfg.argv = argv
-  cfg.dataDir = dataDir
-  cfg.port = cfg.port || 7777
-  cfg.server = cfg.server || 'localhost'
+  cfg.debug = argv.debug
+  cfg.debugRoute = argv.debug && argv['print-routes']
   cfg.plugins = cfg.plugins || []
   cfg.nduts = cfg.nduts || []
+  if (!isBoolean(cfg.ensureDir)) cfg.ensureDir = true
+  forOwn(cfg.dir, (v, k) => {
+    cfg.dir[k] = pathResolve(v)
+    if (cfg.ensureDir) fs.ensureDirSync(cfg.dir[k])
+  })
+  cfg.dir.base = pathResolve(process.cwd())
   return cfg
 }
 

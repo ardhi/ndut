@@ -23,11 +23,12 @@
   "dependencies": {
     "@mgcrea/fastify-request-logger": "^0.5.2",
     "@mgcrea/pino-pretty-compact": "^0.5.0",
-    "aneka": "0.0.8",
+    "aneka": "0.0.10",
     "fastify": "^3.24.0",
     "fastify-static": "^4.5.0",
     "fs-extra": "^10.0.0",
     "lodash": "^4.17.21",
+    "log-timestamp": "^0.3.0",
     "mime": "^3.0.0",
     "mri": "^1.2.0",
     "ndut-helper": "file:../ndut-helper",
