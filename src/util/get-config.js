@@ -44,6 +44,7 @@ const initConfig = async () => {
   cfg.debug = argv.debug
   cfg.debugRoute = argv.debug && argv['print-routes']
   cfg.plugins = cfg.plugins || []
+  cfg.routes = cfg.routes || []
   cfg.nduts = cfg.nduts || []
   if (!isBoolean(cfg.ensureDir)) cfg.ensureDir = true
   forOwn(cfg.dir, (v, k) => {
@@ -54,7 +55,7 @@ const initConfig = async () => {
   return cfg
 }
 
-module.exports = async () => {
+module.exports = async function () {
   const cfg = await initConfig()
   return cfg
 }

@@ -1,7 +1,7 @@
 const fs = require('fs-extra')
 const mime = require('mime')
 
-module.exports = async (fastify, opts) => {
+module.exports = async function (fastify, opts) {
   fastify.get('/favicon.ico', (request, reply) => {
     const noIcon = opts.file === false || !fs.existsSync(opts.file)
     if (noIcon) reply.code(404).send()
