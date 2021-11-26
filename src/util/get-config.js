@@ -1,9 +1,8 @@
 const mri = require('mri')
 const argv = mri(process.argv.slice(2), {
-  boolean: ['debug', 'print-routes'],
+  boolean: ['debug', 'print-routes', 'print-plugins'],
   string: ['data-dir'],
   alias: {
-    r: 'print-routes',
     d: 'data-dir'
   }
 })
@@ -42,7 +41,8 @@ const initConfig = async () => {
     fatal(err.message)
   }
   cfg.debug = argv.debug
-  cfg.debugRoute = argv.debug && argv['print-routes']
+  cfg.printRoutes = argv.debug && argv['print-routes']
+  cfg.printPlugins = argv.debug && argv['print-plugins']
   cfg.plugins = cfg.plugins || []
   cfg.routes = cfg.routes || []
   cfg.nduts = cfg.nduts || []
