@@ -11,11 +11,12 @@ const pathResolve = require('aneka/src/fs/path-resolve')
 const path = require('path')
 const fs = require('fs-extra')
 const { isEmpty, merge, forOwn, isBoolean, omit } = require('lodash')
+require('dotenv').config()
 
-const initConfig = async () => {
+module.exports = async function () {
   let cfg = {
     dir: {
-      data: argv['data-dir'],
+      data: process.env.DATADIR || argv['data-dir'],
       route: './routes',
       public: './public',
       tmp: './tmp'
@@ -40,9 +41,9 @@ const initConfig = async () => {
   } catch (err) {
     fatal(err.message)
   }
-  cfg.debug = argv.debug
-  cfg.printRoutes = argv.debug && argv['print-routes']
-  cfg.printPlugins = argv.debug && argv['print-plugins']
+  cfg.debug = process.env.DEBUG || argv.debug
+  cfg.printRoutes = cfg.debug && argv['print-routes']
+  cfg.printPlugins = cfg.debug && argv['print-plugins']
   cfg.plugins = cfg.plugins || []
   cfg.routes = cfg.routes || []
   cfg.nduts = cfg.nduts || []
@@ -52,10 +53,5 @@ const initConfig = async () => {
     if (cfg.ensureDir) fs.ensureDirSync(cfg.dir[k])
   })
   cfg.dir.base = pathResolve(process.cwd())
-  return cfg
-}
-
-module.exports = async function () {
-  const cfg = await initConfig()
   return cfg
 }

@@ -25,6 +25,7 @@
     "@mgcrea/fastify-request-logger": "^0.5.2",
     "@mgcrea/pino-pretty-compact": "^0.5.0",
     "aneka": "0.0.10",
+    "dotenv": "^10.0.0",
     "fastify": "^3.24.0",
     "fastify-compress": "^3.6.1",
     "fastify-cors": "^6.0.2",

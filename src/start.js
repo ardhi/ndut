@@ -1,5 +1,5 @@
 const getConfig = require('./util/get-config')
-const { isFunction, get, isString, find, map, merge } = require('lodash')
+const { isFunction, isString, merge } = require('lodash')
 const print = require('aneka/src/misc/print')
 const requireAll = require('aneka/src/loader/require-all')
 const mixPlugins = require('ndut-helper/src/mix-plugins')
@@ -83,21 +83,20 @@ module.exports = async function (options = {}) {
     }
   }
 
-  // await scanForRoutes(config.dir.route, fastify)
-  for (const r of config.routes) {
+  const routes = await scanForRoutes({ dir: config.dir.route, fastify })
+  for (const r of routes) {
     let module = require(r.file)
     if (isFunction(module)) module = await module(fastify)
     module.url = r.url
     module.method = r.method
     fastify.route(module)
   }
-  fastify.setErrorHandler(function (error, request, reply) {
+  fastify.setErrorHandler((error, request, reply) => {
     reply.code(error.output.statusCode).send(error.message)
   })
-  const preHandler = fastify.rateLimit ? fastify.rateLimit() : undefined
   fastify.setNotFoundHandler({
-    preHandler
-  }, function (request, reply) {
+    preHandler: fastify.rateLimit ? fastify.rateLimit() : undefined
+  }, (request, reply) => {
     throw new fastify.Boom.Boom('Page not found', { statusCode: 404 })
   })
 
@@ -106,7 +105,7 @@ module.exports = async function (options = {}) {
   }
   if (isFunction(beforeListening)) await beforeListening({ fastify })
 
-  fastify.log.debug('Loaded root plugins:')
+  fastify.log.debug('Main plugins:')
   config.plugins.forEach(item => {
     fastify.log.debug(`${item.disabled ? '-' : '+'} ${item.name}`)
   })
