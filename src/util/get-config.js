@@ -1,16 +1,15 @@
 const mri = require('mri')
 const argv = mri(process.argv.slice(2), {
   boolean: ['debug', 'print-routes', 'print-plugins'],
-  string: ['data-dir'],
+  string: ['data-dir', 'mode'],
   alias: {
-    d: 'data-dir'
+    d: 'data-dir',
+    m: 'mode'
   }
 })
-const fatal = require('aneka/src/misc/fatal')
-const pathResolve = require('aneka/src/fs/path-resolve')
+const { fs, _, aneka } = require('ndut-helper')
+const { fatal, pathResolve } = aneka
 const path = require('path')
-const fs = require('fs-extra')
-const { isEmpty, merge, forOwn, isBoolean, omit } = require('lodash')
 require('dotenv').config()
 
 module.exports = async function () {
@@ -31,24 +30,28 @@ module.exports = async function () {
     },
     factory: {}
   }
-  if (isEmpty(cfg.dir.data)) fatal('No data directory provided')
+  if (_.isEmpty(cfg.dir.data)) fatal('No data directory provided')
   cfg.dir.data = pathResolve(cfg.dir.data)
   if (!fs.existsSync(cfg.dir.data)) fatal(`Directory "${cfg.dir.data}" doesn\'t exists!`)
   const cfgFile = pathResolve(path.join(cfg.dir.data, 'config.json'))
   if (!fs.existsSync(cfgFile)) fatal(`Configuration file "${cfgFile}" not found!`)
   try {
-    cfg = merge(cfg, omit(require(cfgFile), ['dir']))
+    cfg = _.merge(cfg, _.omit(require(cfgFile), ['dir']))
   } catch (err) {
     fatal(err.message)
   }
+  cfg.mode = argv.mode || 'run'
   cfg.debug = process.env.DEBUG || argv.debug
+  if (cfg.mode === 'build') cfg.debug = true
+  process.env.DEBUG = cfg.debug
   cfg.printRoutes = cfg.debug && argv['print-routes']
   cfg.printPlugins = cfg.debug && argv['print-plugins']
+  cfg.args = argv._
   cfg.plugins = cfg.plugins || []
   cfg.routes = cfg.routes || []
   cfg.nduts = cfg.nduts || []
-  if (!isBoolean(cfg.ensureDir)) cfg.ensureDir = true
-  forOwn(cfg.dir, (v, k) => {
+  if (!_.isBoolean(cfg.ensureDir)) cfg.ensureDir = true
+  _.forOwn(cfg.dir, (v, k) => {
     cfg.dir[k] = pathResolve(v)
     if (cfg.ensureDir) fs.ensureDirSync(cfg.dir[k])
   })

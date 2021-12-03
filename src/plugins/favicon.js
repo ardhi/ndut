@@ -1,4 +1,4 @@
-const fs = require('fs-extra')
+const { fs } = require('ndut-helper')
 const mime = require('mime')
 
 module.exports = async function (fastify, opts) {

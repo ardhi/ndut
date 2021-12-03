@@ -1,9 +1,6 @@
 const getConfig = require('./util/get-config')
-const { isFunction, isString, merge } = require('lodash')
-const print = require('aneka/src/misc/print')
-const requireAll = require('aneka/src/loader/require-all')
-const mixPlugins = require('ndut-helper/src/mix-plugins')
-const scanForRoutes = require('ndut-helper/src/scan-for-routes')
+const { _, aneka, mixPlugins, scanForRoutes } = require('ndut-helper')
+const { print, requireDeep, getModuleDirDeep, fatal } = aneka
 const qs = require('qs')
 const Fastify = require('fastify')
 const prettifier = require('@mgcrea/pino-pretty-compact')
@@ -21,12 +18,12 @@ module.exports = async function (options = {}) {
     ndutsActions[a] = []
   })
 
-  if (isFunction(afterConfig)) await afterConfig({ config })
+  if (_.isFunction(afterConfig)) await afterConfig(config)
   config.factory.logger = config.factory.logger ||
     (config.debug ? { prettyPrint: true, prettifier: prettifier.default, level: 'debug' } : { level: 'info' })
   config.factory.disableRequestLogging = config.factory.disableRequestLogging || config.debug
-  const fastify = Fastify(config.factory)
-  if (config.debug) fastify.register(require('@mgcrea/fastify-request-logger').default)
+  const fastify = Fastify(_.cloneDeep(config.factory))
+  if (config.debug) await fastify.register(require('@mgcrea/fastify-request-logger').default)
   fastify.decorate('config', config)
   fastify.decorate('Boom', require('@hapi/boom'))
 
@@ -48,45 +45,52 @@ module.exports = async function (options = {}) {
   })
   mixPlugins(config.plugins, config)
   for (const fn of ndutsActions.beforeInject) {
-    await fn({ fastify })
+    await fn(fastify)
   }
-  if (isFunction(beforeInject)) await beforeInject({ fastify })
+  if (_.isFunction(beforeInject)) await beforeInject(fastify)
   mixPlugins(config.plugins, config)
 
   for (let n of config.nduts) {
-    if (isString(n)) n = { name: n }
-    if (!n.disabled) {
-      if (!n.module) n.module = require(n.name)
-      const result = await n.module({ fastify })
-      actions.forEach(a => {
-        if (isFunction(result[a])) ndutsActions[a].push(result[a])
-      })
-      if (result.plugin) fastify.register(result.plugin, merge(result.pluginOptions, n.options))
+    if (_.isString(n)) n = { name: n }
+    try {
+      n.dir = getModuleDirDeep(n.name)
+      if (!n.disabled) {
+        if (!n.module) n.module = require(n.dir)
+        const result = await n.module(fastify) || {}
+        _.each(actions, a => {
+          if (_.isFunction(result[a])) ndutsActions[a].push(result[a])
+        })
+        if (result.plugin) await fastify.register(result.plugin, _.merge(result.options, n.options))
+      }
+    } catch (err) {
+      fatal(err)
     }
   }
 
   for (const fn of ndutsActions.afterInject) {
-    await fn({ fastify })
+    await fn(fastify)
   }
-  if (isFunction(afterInject)) await afterInject({ fastify })
+  if (_.isFunction(afterInject)) await afterInject(fastify)
   mixPlugins(config.plugins, config)
 
   config.plugins.push({ name: 'fastify-static', module: fastifyStatic, options: { root: config.dir.public, prefix: config.prefix.public } })
   config.plugins.push({ name: 'favicon', module: favicon, options: { file: false } })
   mixPlugins(oldPlugins, config)
 
+  fastify.log.info('Initialize main plugins')
   for (let p of config.plugins) {
+    fastify.log.debug(`${p.disabled ? '-' : '+'} ${p.name}`)
     if (!p.disabled) {
       if (p.module) await fastify.register(p.module, p.options)
-      else await fastify.register(requireAll(p.name), p.options)
+      else await fastify.register(requireDeep(p.name), p.options)
       if (p.module) delete p.module
     }
   }
 
-  const routes = await scanForRoutes({ dir: config.dir.route, fastify })
+  const routes = await scanForRoutes(fastify, config.dir.route)
   for (const r of routes) {
     let module = require(r.file)
-    if (isFunction(module)) module = await module(fastify)
+    if (_.isFunction(module)) module = await module(fastify)
     module.url = r.url
     module.method = r.method
     fastify.route(module)
@@ -101,14 +105,9 @@ module.exports = async function (options = {}) {
   })
 
   for (const fn of ndutsActions.beforeListening) {
-    await fn({ fastify })
+    await fn(fastify)
   }
-  if (isFunction(beforeListening)) await beforeListening({ fastify })
-
-  fastify.log.debug('Main plugins:')
-  config.plugins.forEach(item => {
-    fastify.log.debug(`${item.disabled ? '-' : '+'} ${item.name}`)
-  })
+  if (_.isFunction(beforeListening)) await beforeListening(fastify)
 
   try {
     await fastify.listen(config.server.port, config.server.ip)
