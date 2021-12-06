@@ -1,10 +1,11 @@
 const getConfig = require('./util/get-config')
 const { _, aneka, mixPlugins, scanForRoutes } = require('ndut-helper')
-const { print, requireDeep, getModuleDirDeep, fatal } = aneka
+const { requireDeep, getModuleDirDeep } = aneka
 const qs = require('qs')
 const Fastify = require('fastify')
 const prettifier = require('@mgcrea/pino-pretty-compact')
 const favicon = require('./plugins/favicon')
+const Boom = require('@hapi/boom')
 require('log-timestamp')
 
 const actions = ['beforeInject', 'afterInject', 'beforeListening']
@@ -29,7 +30,7 @@ module.exports = async function (options = {}) {
   const fastify = Fastify(_.cloneDeep(config.factory))
   if (config.debug) await fastify.register(require('@mgcrea/fastify-request-logger').default)
   fastify.decorate('config', config)
-  fastify.decorate('Boom', require('@hapi/boom'))
+  fastify.decorate('Boom', Boom)
 
   const oldPlugins = config.plugins
   config.plugins = [
@@ -60,9 +61,9 @@ module.exports = async function (options = {}) {
     n.dir = getModuleDirDeep(n.name)
     if (!n.disabled) {
       if (!n.module) n.module = require(n.dir)
-      const result = await n.module(fastify) || {}
       n.prefix = n.prefix || (n.name.substr(0, 5) === 'ndut-' ? n.name.substr(5) : n.name)
       if (n.prefix[0] === '/') n.prefix = n.prefix.slice(1)
+      const result = await n.module(fastify) || {}
       fastify.log.info(`Initialize '${n.name}'`)
       if (result.config) n = _.merge(n, _.omit(config, ['name', 'dir', 'disabled', 'module']))
       _.each(actions, a => {
@@ -113,12 +114,13 @@ module.exports = async function (options = {}) {
     fastify.route(module)
   }
   fastify.setErrorHandler((error, request, reply) => {
+    if (!error.isBoom) error = Boom.boomify(error)
     reply.code(error.output.statusCode).send(error.message)
   })
   fastify.setNotFoundHandler({
     preHandler: fastify.rateLimit ? fastify.rateLimit() : undefined
   }, (request, reply) => {
-    throw new fastify.Boom.Boom('Page not found', { statusCode: 404 })
+    throw new Boom.Boom('Page not found', { statusCode: 404 })
   })
 
   for (const fn of ndutsActions.beforeListening) {

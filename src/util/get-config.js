@@ -30,9 +30,9 @@ module.exports = async function () {
   }
   if (_.isEmpty(cfg.dir.data)) fatal('No data directory provided')
   cfg.dir.data = pathResolve(cfg.dir.data)
-  if (!fs.existsSync(cfg.dir.data)) fatal(`Directory "${cfg.dir.data}" doesn\'t exists!`)
+  if (!fs.existsSync(cfg.dir.data)) fatal(`Directory '${cfg.dir.data}' doesn\'t exists!`)
   const cfgFile = pathResolve(path.join(cfg.dir.data, 'config.json'))
-  if (!fs.existsSync(cfgFile)) fatal(`Configuration file "${cfgFile}" not found!`)
+  if (!fs.existsSync(cfgFile)) fatal(`Configuration file '${cfgFile}' not found!`)
   try {
     cfg = _.merge(cfg, _.omit(require(cfgFile), ['dir']))
   } catch (err) {
