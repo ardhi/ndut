@@ -13,17 +13,15 @@ const path = require('path')
 require('dotenv').config()
 
 module.exports = async function () {
+  const base = pathResolve(process.cwd())
   let cfg = {
     dir: {
       data: process.env.DATADIR || argv['data-dir'],
-      route: './routes',
-      public: './public',
-      tmp: './tmp'
+      base,
+      route: `${base}/route`,
+      tmp: `${base}/static`
     },
-    prefix: {
-      route: '/',
-      public: '/assets'
-    },
+    routePrefix: '/',
     server: {
       ip: '127.0.0.1',
       port: 7777
@@ -55,6 +53,5 @@ module.exports = async function () {
     cfg.dir[k] = pathResolve(v)
     if (cfg.ensureDir) fs.ensureDirSync(cfg.dir[k])
   })
-  cfg.dir.base = pathResolve(process.cwd())
   return cfg
 }

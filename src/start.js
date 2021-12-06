@@ -4,11 +4,15 @@ const { print, requireDeep, getModuleDirDeep, fatal } = aneka
 const qs = require('qs')
 const Fastify = require('fastify')
 const prettifier = require('@mgcrea/pino-pretty-compact')
-const fastifyStatic = require('fastify-static')
 const favicon = require('./plugins/favicon')
 require('log-timestamp')
 
 const actions = ['beforeInject', 'afterInject', 'beforeListening']
+const printLines = (fastify, text, method = 'debug') => {
+  _.each(_.trim(text).split('\n'), line => {
+    fastify.log[method](line)
+  })
+}
 
 module.exports = async function (options = {}) {
   const { afterConfig, beforeInject, afterInject, beforeListening } = options
@@ -50,21 +54,29 @@ module.exports = async function (options = {}) {
   if (_.isFunction(beforeInject)) await beforeInject(fastify)
   mixPlugins(config.plugins, config)
 
+  let ndutsPlugins = []
   for (let n of config.nduts) {
     if (_.isString(n)) n = { name: n }
-    try {
-      n.dir = getModuleDirDeep(n.name)
-      if (!n.disabled) {
-        if (!n.module) n.module = require(n.dir)
-        const result = await n.module(fastify) || {}
-        _.each(actions, a => {
-          if (_.isFunction(result[a])) ndutsActions[a].push(result[a])
-        })
-        if (result.plugin) await fastify.register(result.plugin, _.merge(result.options, n.options))
+    n.dir = getModuleDirDeep(n.name)
+    if (!n.disabled) {
+      if (!n.module) n.module = require(n.dir)
+      const result = await n.module(fastify) || {}
+      n.prefix = n.prefix || (n.name.substr(0, 5) === 'ndut-' ? n.name.substr(5) : n.name)
+      if (n.prefix[0] === '/') n.prefix = n.prefix.slice(1)
+      fastify.log.info(`Initialize '${n.name}'`)
+      if (result.config) n = _.merge(n, _.omit(config, ['name', 'dir', 'disabled', 'module']))
+      _.each(actions, a => {
+        if (_.isFunction(result[a])) ndutsActions[a].push(result[a])
+      })
+      if (result.plugin) {
+        if (result.registerEarly) {
+          fastify.log.info(`Registering '${n.name}' (early)`)
+          await fastify.register(result.plugin, _.merge(result.options, n.options))
+        }
+        else ndutsPlugins.push({ name: n.name, options: n.options, result })
       }
-    } catch (err) {
-      fatal(err)
     }
+    if (n.module) delete n.module
   }
 
   for (const fn of ndutsActions.afterInject) {
@@ -73,7 +85,6 @@ module.exports = async function (options = {}) {
   if (_.isFunction(afterInject)) await afterInject(fastify)
   mixPlugins(config.plugins, config)
 
-  config.plugins.push({ name: 'fastify-static', module: fastifyStatic, options: { root: config.dir.public, prefix: config.prefix.public } })
   config.plugins.push({ name: 'favicon', module: favicon, options: { file: false } })
   mixPlugins(oldPlugins, config)
 
@@ -86,6 +97,12 @@ module.exports = async function (options = {}) {
       if (p.module) delete p.module
     }
   }
+
+  for (const n of ndutsPlugins) {
+    fastify.log.info(`Registering '${n.name}'`)
+    await fastify.register(n.result.plugin, _.merge(n.result.options, n.options))
+  }
+  ndutsPlugins = null
 
   const routes = await scanForRoutes(fastify, config.dir.route)
   for (const r of routes) {
@@ -111,8 +128,14 @@ module.exports = async function (options = {}) {
 
   try {
     await fastify.listen(config.server.port, config.server.ip)
-    if (config.printRoutes) print('Routes:\n' + fastify.printRoutes({ commonPrefix: false }))
-    if (config.printPlugins) print('Plugins:\n' + fastify.printPlugins())
+    if (config.printRoutes) {
+      fastify.log.info('Routes:')
+      printLines(fastify, fastify.printRoutes({ commonPrefix: false }))
+    }
+    if (config.printPlugins) {
+      fastify.log.info('Plugins:')
+      printLines(fastify, fastify.printPlugins())
+    }
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)
