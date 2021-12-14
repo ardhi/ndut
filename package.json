@@ -1,7 +1,7 @@
 {
   "name": "ndut",
-  "version": "0.0.1",
-  "description": "Ndut",
+  "version": "0.1.0",
+  "description": "Core Bootstrap & Helpers for Ndut Framework",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,8 +11,10 @@
     "url": "git+https://github.com/ardhi/ndut.git"
   },
   "keywords": [
-    "fastify",
-    "bootstraper"
+    "ndut",
+    "modular",
+    "framework",
+    "fastify"
   ],
   "author": "Ardhi Lukianto <ardhi@lukianto.com>",
   "license": "MIT",
