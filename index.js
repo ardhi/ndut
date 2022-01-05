@@ -1,3 +1,3 @@
-const start = require('./lib/start.js')
+const start = require('./lib/start')
 
 module.exports = { start }
