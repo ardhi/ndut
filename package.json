@@ -1,6 +1,6 @@
 {
   "name": "ndut",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Core Bootstrap & Helpers for Ndut Framework",
   "main": "index.js",
   "scripts": {
