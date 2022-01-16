@@ -1,6 +1,6 @@
 {
   "name": "ndut",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Core Bootstrap & Helpers for Ndut Framework",
   "main": "index.js",
   "scripts": {
@@ -40,6 +40,7 @@
     "fastify-plugin": "^3.0.0",
     "fastify-rate-limit": "^5.6.2",
     "fs-extra": "^10.0.0",
+    "kleur": "^4.1.4",
     "lodash": "^4.17.21",
     "log-timestamp": "^0.3.0",
     "luxon": "^2.1.1",
@@ -48,6 +49,7 @@
     "outmatch": "^0.7.0",
     "proper-lockfile": "^4.1.2",
     "qs": "^6.10.1",
+    "readline-promise": "^1.0.5",
     "scramjet": "^4.36.1"
   }
 }
