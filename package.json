@@ -1,6 +1,6 @@
 {
   "name": "ndut",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Core Bootstrap & Helpers for Ndut Framework",
   "main": "index.js",
   "scripts": {
@@ -47,7 +47,6 @@
     "mime": "^3.0.0",
     "mri": "^1.2.0",
     "outmatch": "^0.7.0",
-    "performant-array-to-tree": "^1.9.1",
     "proper-lockfile": "^4.1.2",
     "qs": "^6.10.1",
     "readline-promise": "^1.0.5",
