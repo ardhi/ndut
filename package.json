@@ -1,6 +1,6 @@
 {
   "name": "ndut",
-  "version": "0.6.14",
+  "version": "0.6.15",
   "description": "Core Bootstrap & Helpers for Ndut Framework",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
     "fastify-cors": "^6.0.2",
     "fastify-formbody": "^5.2.0",
     "fastify-helmet": "^5.3.2",
-    "fastify-multipart": "^5.1.0",
+    "fastify-multipart": "git+https://github.com/ardhi/fastify-multipart.git",
     "fastify-plugin": "^3.0.0",
     "fastify-rate-limit": "^5.6.2",
     "fs-extra": "^10.0.0",
